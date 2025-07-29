@@ -1,4 +1,4 @@
-# too_long_line
+# Too Long Line
 SKY I.E. hackathon assignment
 
 ## project architecture
