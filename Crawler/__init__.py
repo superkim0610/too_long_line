@@ -1,3 +1,4 @@
+import os
 import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -49,8 +50,12 @@ class NaverMapCrawler:
         wait.until(EC.presence_of_element_located((By.ID, "searchIframe")))
 
     def save(self):
+        raw_path = "Database/raw"
+        if not os.path.exists(raw_path):
+            os.makedirs(raw_path)
+
         df = pd.DataFrame(self.data)
-        df.to_csv(f"Database/raw/{self.date_str}_raw.csv", index=False)
+        df.to_csv(f"{raw_path}/{self.date_str}_raw.csv", index=False)
 
         # print("[successfully saved]")
 
