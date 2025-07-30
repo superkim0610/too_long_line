@@ -5,9 +5,10 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 from datetime import datetime
 import pandas as pd
+from tqdm import tqdm
 
 class NaverMapCrawler:
-    def __init__(self):
+    def __init__(self, headless=False):
         self.data = []
         self.date_str = None
 
@@ -21,13 +22,14 @@ class NaverMapCrawler:
             "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36")
         options.add_argument("--disable-gpu")
         options.add_argument("--no-sandbox")
+        options.add_argument('--disable-dev-shm-usage')
         prefs = {
             "credentials_enable_service": False,
             "profile.password_manager_enabled": False
         }
         options.add_experimental_option("prefs", prefs)
 
-        self.driver = uc.Chrome(options=options)
+        self.driver = uc.Chrome(options=options, headless=headless)
         self.wait = WebDriverWait(self.driver, timeout=10, poll_frequency=0.2)
 
     def set_date(self):
@@ -50,14 +52,11 @@ class NaverMapCrawler:
         df = pd.DataFrame(self.data)
         df.to_csv(f"Database/raw/{self.date_str}_raw.csv", index=False)
 
-        print("[successfully saved]")
+        # print("[successfully saved]")
 
-    def run(self, region):
+    def _run(self, page):
         driver = self.driver
         wait = self.wait
-
-        # search query
-        self.search_query(f"{region} 음식점")
 
         # dynamic scroll
         search_iframe = driver.find_element(By.ID, "searchIframe")
@@ -71,7 +70,7 @@ class NaverMapCrawler:
             scroll_top = driver.execute_script("return arguments[0].scrollTop", restaurant_list_scroll_container)
             scroll_height = driver.execute_script("return arguments[0].scrollHeight", restaurant_list_scroll_container)
             scroll_remain = scroll_height - scroll_top
-            print(f"scroll_num: {scroll_num}, scroll_height: {scroll_height}, scroll_remain: {scroll_remain}")
+            # print(f"scroll_num: {scroll_num}, scroll_height: {scroll_height}, scroll_remain: {scroll_remain}")
 
             # end-of-loop
             if scroll_remain <= 0 or scroll_num >= 20 or prev_scroll_remain == scroll_remain:
@@ -83,15 +82,13 @@ class NaverMapCrawler:
                                       restaurant_list_scroll_container)
                 time.sleep(0.1)
 
-            break
-
             scroll_num += 1
             prev_scroll_remain = int(scroll_remain)
 
         # check each restaurant info, review_data
         restaurant_a_list = driver.find_elements(By.CSS_SELECTOR, "div.CHC5F > div.bSoi3 > a")
 
-        for a in restaurant_a_list[:3]:
+        for a in tqdm(restaurant_a_list, desc=f"page={page}"):
             n_data = dict()
 
             a.click()
@@ -122,7 +119,7 @@ class NaverMapCrawler:
                 ["restaurant_tel", (By.CSS_SELECTOR, "div > span.xlx7Q")],
             ]:
                 try:
-                    print(i[0], driver.find_element(*i[1]).text)
+                    # print(i[0], driver.find_element(*i[1]).text)
                     n_data[i[0]] = driver.find_element(*i[1]).text
                     # exec(f'{i[0]}="{driver.find_element(*i[1]).text}"')
                 except:
@@ -142,7 +139,10 @@ class NaverMapCrawler:
             review_button.click()
             time.sleep(1)
 
-            review_total = int(driver.find_element(By.XPATH, '//div[@class="jypaX"]/em').text[:-1].replace(",", ""))
+            try:
+                review_total = int(driver.find_element(By.XPATH, '//div[@class="jypaX"]/em').text[:-1].replace(",", ""))
+            except:
+                review_total = None
 
             # press review_showmore_button
             while True:
@@ -152,7 +152,7 @@ class NaverMapCrawler:
                     break
 
                 review_showmore_button[0].click()
-                time.sleep(0.5)
+                time.sleep(0.2)
 
             review_li_list = driver.find_elements(By.XPATH, '//ul[@class="K4J9r"]/li')
 
@@ -161,7 +161,7 @@ class NaverMapCrawler:
                 l = review_li.text.strip().split("\n")
                 review_keyword = l[0].replace("\"", "")
                 review_keyword_num = int(l[2])
-                print(review_keyword, review_keyword_num)
+                # print(review_keyword, review_keyword_num)
                 review_num[review_keyword] = review_keyword_num
 
             n_data.update({
@@ -169,8 +169,31 @@ class NaverMapCrawler:
             })
             self.data.append(n_data)
             self.save()
+
             driver.switch_to.default_content()
             driver.switch_to.frame(search_iframe)
+
+        driver.switch_to.default_content()
+
+    def run(self, region):
+        driver = self.driver
+        wait = self.wait
+
+        # search query
+        self.search_query(f"{region} 음식점")
+
+
+
+        for page in tqdm(range(1, 6), desc=f"{region}"):
+            if page != 1:
+                search_iframe = driver.find_element(By.ID, "searchIframe")
+                driver.switch_to.frame(search_iframe)
+                driver.find_elements(By.XPATH, '//div[@class="zRM9F"]/a')[page-1].click()
+                driver.switch_to.default_content()
+
+            self._run(page)
+
+
 
 
 if __name__ == '__main__':
