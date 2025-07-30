@@ -1,5 +1,7 @@
 from Crawler import NaverMapCrawler
 from Data import *
+from Recommender import recommend
+
 import time
 import sys
 
@@ -45,3 +47,5 @@ if __name__ == '__main__':
         integrated_raw_csv_to_data_csv()
     elif sys.argv[1] == "run_pipeline":
         preprocess_pipeline()
+    elif sys.argv[1] == "recommend":
+        recommend(None, ["한식", "일식"], None)
