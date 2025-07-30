@@ -8,7 +8,7 @@ def type_filtering(df, types):
     df = df.dropna(subset=["restaurant_type"])
     df = df.copy()
     df["대분류"] = df["restaurant_type"].apply(lambda x: eval(x)["대분류"])
-    print(df[df["대분류"].isin(types)])
+    # print(df[df["대분류"].isin(types)])
     return df[df["대분류"].isin(types)]
 
 def haversine_distance(lat1, lon1, lat2, lon2, radius_km=6371):
@@ -28,7 +28,7 @@ def dist_filtering(df, loc, distance):
         lambda row: haversine_distance(lat, lon, row["restaurant_lat"], row["restaurant_lon"]),
         axis=1
     )
-    print(df["distance"])
+    # print(df["distance"])
 
     return df[df["distance"] <= distance]
 
@@ -53,7 +53,7 @@ def calc_Z(df, keywords, k):
 
 
 def recommend(user_location, restaurant_types, restaurant_keywords):
-    print(restaurant_keywords)
+    # print(restaurant_keywords)
     k_path = "Recommender/k.pickle"
     if os.path.exists(k_path):
         with open(k_path, "rb") as f:
