@@ -30,7 +30,7 @@ def clean_address(address):
     cleaned = re.sub(r'\s+', ' ', cleaned)
     return cleaned.strip()
 
-def get_lat_lon_vworld(address, key):
+def get_lat_lon_vworld(address):
     url = "https://api.vworld.kr/req/address"
     cleaned_address = clean_address(address)
     full_address = normalize_city(cleaned_address)
@@ -41,7 +41,7 @@ def get_lat_lon_vworld(address, key):
         "format": "json",
         "crs": "epsg:4326",
         "address": full_address,
-        "key": key,
+        "key": API_KEY,
         "type": "road"
     }
 
@@ -52,10 +52,10 @@ def get_lat_lon_vworld(address, key):
             point = data['response']['result']['point']
             return float(point['y']), float(point['x'])
         else:
-            print(f"❌ 변환 실패: '{full_address}' → 상태: {data['response']['status']}")
+            # print(f"❌ 변환 실패: '{full_address}' → 상태: {data['response']['status']}")
             return None, None
     except Exception as e:
-        print(f"⚠️ 예외 발생: {e}")
+        # print(f"⚠️ 예외 발생: {e}")
         return None, None
 
 def add_lat_lon_to_integrated_raw_csv(INPUT_FILE, OUTPUT_FILE):
