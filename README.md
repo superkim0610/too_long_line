@@ -4,8 +4,10 @@ SKY I.E. hackathon assignment
 ## project architecture
 ```
 .
+├── app.py
 ├── main.py
-├── App                 - Process user input & output
+├── Database            
+├── Data                - Process csv files, data
 │   └── __init__.py
 ├── Recommender         - Recommendation Engine
 │   └── __init__.py
@@ -19,8 +21,3 @@ SKY I.E. hackathon assignment
 3. 리뷰 크롤링
 4. 추천 시스템 설계 및 구현
 5. 거리 관련
-
-## confer.
-+ 가격대 : 필터링
-+ 음식 종류 및 메뉴 : 필터링
-+ 거리 : 필터링
